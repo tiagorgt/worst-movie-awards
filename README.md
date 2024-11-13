@@ -1,11 +1,11 @@
 # Golden Raspberry Awards API - Worst Movie
 
-This project is a NestJS-based server-side application that provides a RESTful API for reading the list of nominees and winners of the Worst Picture category of the Golden Raspberry Awards. The API provides endpoints to obtain the producer with the longest interval between two consecutive awards and the one who received two awards the fastest. The APIs are implemented following [Level 2 of the Richardson Maturity Model](https://martinfowler.com/articles/richardsonMaturityModel.html). It is built using TypeScript and TypeORM.
+This project is a [NestJS](https://nestjs.com/)-based server-side application that provides a RESTful API for reading the list of nominees and winners of the Worst Picture category of the Golden Raspberry Awards. The API provides endpoints to obtain the producer with the longest interval between two consecutive awards and the one who received two awards the fastest. The APIs are implemented following [Level 2 of the Richardson Maturity Model](https://martinfowler.com/articles/richardsonMaturityModel.html). It is built using TypeScript and TypeORM.
 
 
 ## Prerequisites
 
-- Node.js (>= 14.x)
+- [Node.js](https://nodejs.org/en) (>= 14.x)
 - npm (>= 6.x)
 
 ## Installation
