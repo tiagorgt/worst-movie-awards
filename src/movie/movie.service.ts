@@ -14,42 +14,13 @@ import { ProducerIntervalDto } from './dto/producer-interval.dto';
 import { ProducerIntervalOutputDto } from './dto/producer-interval-output.dto';
 
 @Injectable()
-export class MovieService implements OnModuleInit {
+export class MovieService {
   private readonly logger = new Logger(MovieService.name);
 
   constructor(
     @InjectRepository(Movie)
     private movieRepository: Repository<Movie>,
   ) {}
-
-  async onModuleInit() {
-    const csvFilePath = 'data/movies.csv';
-
-    this.logger.log(`Importing movies from CSV file ${csvFilePath}`);
-
-    const movies = [];
-
-    fs.createReadStream(csvFilePath)
-      .pipe(csv({ separator: ';' }))
-      .on('data', (row) => {
-        movies.push(row);
-      })
-      .on('end', async () => {
-        this.logger.log(`Found ${movies.length} movies`);
-
-        for (const movie of movies) {
-          await this.movieRepository.save({
-            ...movie,
-            winner: movie.winner === 'yes',
-          });
-        }
-
-        this.logger.log('Movies imported');
-      })
-      .on('error', (error) => {
-        this.logger.error(`Error importing movies: ${JSON.stringify(error)}`);
-      });
-  }
 
   async getMovies() {
     this.logger.log('Getting all movies');
@@ -85,12 +56,10 @@ export class MovieService implements OnModuleInit {
     if (result.affected === 0) {
       const message = `Movie with id ${id} not found`;
       this.logger.warn(message);
-      return false;
+      throw new NotFoundException(message);
     }
 
     this.logger.log(`Movie deleted with id ${id}`);
-
-    return true;
   }
 
   async findMovieById(id: number) {

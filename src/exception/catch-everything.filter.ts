@@ -24,6 +24,7 @@ export class CatchEverythingFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+        console.log(exception);
     const response = exception.response ?? null;
     const message = response?.message || exception.message || null;
 

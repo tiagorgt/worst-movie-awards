@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -16,17 +17,17 @@ export class MovieController {
 
   @Get()
   async getMovies() {
-    return this.movieService.getMovies();
+    return await this.movieService.getMovies();
   }
 
   @Get(':id')
   async getMovie(@Param('id') id: number) {
-    return this.movieService.findMovieById(id);
+    return await this.movieService.findMovieById(id);
   }
 
   @Post()
   async createMovie(@Body() inputMovieDto: InputMovieDto) {
-    return this.movieService.createMovie(inputMovieDto);
+    return await this.movieService.createMovie(inputMovieDto);
   }
 
   @Put(':id')
@@ -34,16 +35,17 @@ export class MovieController {
     @Param('id') id: number,
     @Body() inputMovieDto: InputMovieDto,
   ) {
-    return this.movieService.updateMovie(id, inputMovieDto);
+    return await this.movieService.updateMovie(id, inputMovieDto);
   }
 
   @Delete(':id')
+  @HttpCode(204)
   async deleteMovie(@Param('id') id: number) {
-    return this.movieService.deleteMovie(id);
+    await this.movieService.deleteMovie(id);
   }
 
-  @Get('producers-intervals')
+  @Get('producers/intervals')
   async getProducers() {
-    return this.movieService.getProducersWithIntervals();
+    return await this.movieService.getProducersWithIntervals();
   }
 }
