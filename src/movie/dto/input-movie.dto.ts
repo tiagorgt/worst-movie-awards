@@ -1,18 +1,28 @@
-import { IsBoolean, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsPositive,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class InputMovieDto {
   @IsString()
+  @MaxLength(255)
   title: string;
 
-  @IsNumber()
+  @IsInt()
+  @IsPositive()
   year: number;
 
   @IsString()
+  @MaxLength(255)
   producers: string;
 
   @IsBoolean()
   winner: boolean;
 
   @IsString()
+  @MaxLength(255)
   studios: string;
 }
