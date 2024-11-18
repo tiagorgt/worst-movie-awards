@@ -38,6 +38,20 @@ This project is a [NestJS](https://nestjs.com/)-based server-side application th
    npm run test:e2e
    ```
 
+## Database Diagram
+
+```bash
++-----------------+        +--------------------------+        +-----------------+
+|     movies      |        |   movie_producers        |        |   producers     |
++-----------------+        +--------------------------+        +-----------------+
+| id: INTEGER (PK)|<------>| movie_id: INTEGER (FK)   |<------>| id: INTEGER (PK)|
+| title: TEXT     |        | producer_id: INTEGER (FK)|------->| name: TEXT      |
+| year: INTEGER   |        +--------------------------+        +-----------------+
+| winner: BOOLEAN |
+| studios: TEXT   |
++-----------------+
+```
+
 ## API Documentation
 
 ### Producers
