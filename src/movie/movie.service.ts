@@ -85,7 +85,10 @@ export class MovieService {
   async findMovieById(id: number) {
     this.logger.log(`Finding movie with id ${id}`);
 
-    const result = await this.movieRepository.findOneBy({ id });
+    const result = await this.movieRepository.findOne({
+      where: { id },
+      relations: ['producers'],
+    });
 
     if (!result) {
       const message = `Movie with id ${id} not found`;
