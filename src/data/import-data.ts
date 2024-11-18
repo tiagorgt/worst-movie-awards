@@ -1,9 +1,13 @@
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
-import { Movie } from 'src/movie/movie.entity';
+import { Movie } from '../movie/movie.entity';
 import { Repository } from 'typeorm';
+import { Producer } from '../producer/producer.entity';
 
-export async function importCsvData(movieRepository: Repository<Movie>) {
+export async function importCsvData(
+  movieRepository: Repository<Movie>,
+  producerRepository: Repository<Producer>,
+) {
   await new Promise<void>((resolve, reject) => {
     const movies = [];
     fs.createReadStream('src/data/movies.csv')
@@ -12,10 +16,37 @@ export async function importCsvData(movieRepository: Repository<Movie>) {
         movies.push(row);
       })
       .on('end', async () => {
-        const formattedMovies = movies.map((movie) => ({
-          ...movie,
-          winner: movie.winner === 'yes',
-        }));
+        const uniqueProducers = new Set<string>();
+        movies.forEach((movie) => {
+          movie.producers.split(/,| and /).forEach((producer) => {
+            uniqueProducers.add(producer.trim());
+          });
+        });
+
+        const producersToCreate: Producer[] = Array.from(uniqueProducers).map(
+          (producer) => {
+            return producerRepository.create({ name: producer });
+          },
+        );
+        await producerRepository.save(producersToCreate);
+
+        const formattedMovies = movies.map((movie) => {
+          const { title, year, studios, winner, producers } = movie;
+
+          const formattedProducers = producers.split(/,| and /).map((p) => {
+            return producersToCreate.find(
+              (producer) => producer.name === p.trim(),
+            );
+          });
+
+          return {
+            title,
+            year: parseInt(year),
+            studios,
+            winner: winner === 'yes',
+            producers: formattedProducers,
+          };
+        });
         await movieRepository.save(formattedMovies);
         resolve();
       })

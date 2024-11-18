@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Movie } from './movie/movie.entity';
 import { APP_FILTER } from '@nestjs/core';
 import { CatchEverythingFilter } from './exception/catch-everything.filter';
+import { ProducerModule } from './producer/producer.module';
+import { Producer } from './producer/producer.entity';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { CatchEverythingFilter } from './exception/catch-everything.filter';
       dropSchema: true,
       synchronize: true,
       logging: false,
-      entities: [Movie],
+      entities: [Movie, Producer],
     }),
     MovieModule,
+    ProducerModule,
   ],
   providers: [
     {

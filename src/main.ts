@@ -6,6 +6,7 @@ import { Movie } from './movie/movie.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { importCsvData } from './data/import-data';
 import helmet from 'helmet';
+import { Producer } from './producer/producer.entity';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,7 +14,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   const movieRepository = app.get<Repository<Movie>>(getRepositoryToken(Movie));
-  await importCsvData(movieRepository);
+  const producerRepository = app.get<Repository<Producer>>(
+    getRepositoryToken(Producer),
+  );
+  await importCsvData(movieRepository, producerRepository);
 
   await app.listen(3000);
 }

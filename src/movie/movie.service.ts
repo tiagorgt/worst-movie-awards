@@ -1,17 +1,11 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Movie } from './movie.entity';
-import * as fs from 'fs';
-import * as csv from 'csv-parser';
 import { InputMovieDto } from './dto/input-movie.dto';
 import { ProducerIntervalDto } from './dto/producer-interval.dto';
 import { ProducerIntervalOutputDto } from './dto/producer-interval-output.dto';
+import { ProducerService } from '../producer/producer.service';
 
 @Injectable()
 export class MovieService {
@@ -20,33 +14,59 @@ export class MovieService {
   constructor(
     @InjectRepository(Movie)
     private movieRepository: Repository<Movie>,
+    @Inject(ProducerService) private producerService: ProducerService,
   ) {}
 
   async getMovies() {
     this.logger.log('Getting all movies');
-    return this.movieRepository.find();
+    return this.movieRepository.find({ relations: ['producers'] });
   }
 
   async createMovie(inputMovieDto: InputMovieDto) {
     this.logger.log(`Creating movie ${JSON.stringify(inputMovieDto)}`);
-    const result = await this.movieRepository.insert(inputMovieDto);
-    this.logger.log(`Movie created with id ${result.identifiers[0].id}`);
-    return this.findMovieById(result.identifiers[0].id);
+
+    const { title, year, winner, producerIds, studios } = inputMovieDto;
+
+    const movie = this.movieRepository.create({ title, year, winner, studios });
+
+    const producerEntities =
+      await this.producerService.findProducersByIds(producerIds);
+
+    movie.producers = producerEntities;
+
+    const result = await this.movieRepository.save(movie);
+
+    this.logger.log(`Movie created with id ${result.id}`);
+
+    return result;
   }
 
   async updateMovie(id: number, inputMovieDto: InputMovieDto) {
     this.logger.log(`Updating movie with id ${id}`);
-    const result = await this.movieRepository.update(id, inputMovieDto);
 
-    if (result.affected === 0) {
-      const message = `Movie with id ${id} not found`;
-      this.logger.error(message);
-      throw new NotFoundException(message);
+    const { title, studios, winner, producerIds, year } = inputMovieDto;
+
+    const movie = await this.movieRepository.findOne({ where: { id } });
+
+    if (!movie) {
+      throw new NotFoundException(`Movie with id ${id} not found`);
     }
+
+    movie.title = title;
+    movie.year = year;
+    movie.winner = winner;
+    movie.studios = studios;
+
+    const producerEntities =
+      await this.producerService.findProducersByIds(producerIds);
+
+    movie.producers = producerEntities;
+
+    await this.movieRepository.save(movie);
 
     this.logger.log(`Movie updated with id ${id}`);
 
-    return this.findMovieById(id);
+    return movie;
   }
 
   async deleteMovie(id: number) {
@@ -78,10 +98,13 @@ export class MovieService {
     return result;
   }
 
-  async getProducersWithIntervals() {
+  async getProducersWithIntervals(): Promise<ProducerIntervalOutputDto> {
     this.logger.log('Getting producers with intervals');
 
-    const movies = await this.movieRepository.find({ where: { winner: true } });
+    const movies = await this.movieRepository.find({
+      where: { winner: true },
+      relations: ['producers'],
+    });
 
     const producerWins = this.groupMoviesByProducer(movies);
     const intervals = this.calculateIntervals(producerWins);
@@ -106,12 +129,12 @@ export class MovieService {
     const producerWins = new Map<string, number[]>();
 
     movies.forEach((movie) => {
-      const producers = movie.producers.split(/,| and /).map((p) => p.trim());
-      producers.forEach((producer) => {
-        if (!producerWins.has(producer)) {
-          producerWins.set(producer, []);
+      movie.producers.forEach((producer) => {
+        const formattedId = `${producer.id}|${producer.name}`;
+        if (!producerWins.has(formattedId)) {
+          producerWins.set(formattedId, []);
         }
-        producerWins.get(producer).push(movie.year);
+        producerWins.get(formattedId).push(movie.year);
       });
     });
 
@@ -126,9 +149,12 @@ export class MovieService {
 
     producerWins.forEach((years, producer) => {
       years.sort((a, b) => a - b);
+
+      const formattedProducer = producer.split('|')[1];
+
       for (let i = 1; i < years.length; i++) {
         intervals.push({
-          producer,
+          producer: formattedProducer,
           interval: years[i] - years[i - 1],
           previousWin: years[i - 1],
           followingWin: years[i],

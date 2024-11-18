@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Producer } from '../producer/producer.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 
 @Entity()
 export class Movie {
@@ -11,8 +18,9 @@ export class Movie {
   @Column()
   year: number;
 
-  @Column()
-  producers: string;
+  @ManyToMany(() => Producer, (producer) => producer.movies, { cascade: true })
+  @JoinTable()
+  producers: Producer[];
 
   @Column()
   winner: boolean;

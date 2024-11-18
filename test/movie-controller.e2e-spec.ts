@@ -1,17 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from './../../src/app.module';
+import { AppModule } from '../src/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Movie } from '../../src/movie/movie.entity';
+import { Movie } from '../src/movie/movie.entity';
 import { Repository } from 'typeorm';
-import { InputMovieDto } from '../../src/movie/dto/input-movie.dto';
-import { importCsvData } from '../../src/data/import-data';
+import { InputMovieDto } from '../src/movie/dto/input-movie.dto';
+import { importCsvData } from '../src/data/import-data';
+import { Producer } from '../src/producer/producer.entity';
 
 describe('MovieController (e2e)', () => {
   let app: INestApplication;
   let movieRepository: Repository<Movie>;
+  let producerRepository: Repository<Producer>;
   let moviesData: Movie[] = [];
+  let producersData: Producer[] = [];
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -24,21 +27,22 @@ describe('MovieController (e2e)', () => {
     movieRepository = moduleFixture.get<Repository<Movie>>(
       getRepositoryToken(Movie),
     );
+    producerRepository = moduleFixture.get<Repository<Producer>>(
+      getRepositoryToken(Producer),
+    );
 
-    await importCsvData(movieRepository);
+    await importCsvData(movieRepository, producerRepository);
 
     await app.init();
 
     moviesData = await movieRepository.find();
+    producersData = await producerRepository.find();
   });
 
   beforeEach(async () => {
-    await movieRepository.query('DELETE FROM movie');
+    await movieRepository.delete('*');
+    await producerRepository.save(producersData);
     await movieRepository.save(moviesData);
-  });
-
-  afterEach(async () => {
-    await movieRepository.query('DELETE FROM movie');
   });
 
   afterAll(async () => {
@@ -83,7 +87,7 @@ describe('MovieController (e2e)', () => {
       const movie: InputMovieDto = {
         title: 'New Movie',
         year: 2021,
-        producers: 'New Producer',
+        producerIds: [producersData[0].id],
         studios: 'New Studio',
         winner: false,
       };
@@ -96,7 +100,7 @@ describe('MovieController (e2e)', () => {
           expect(res.body).toHaveProperty('id');
           expect(res.body.title).toEqual(movie.title);
           expect(res.body.year).toEqual(movie.year);
-          expect(res.body.producers).toEqual(movie.producers);
+          expect(res.body.producers[0].id).toEqual(movie.producerIds[0]);
           expect(res.body.studios).toEqual(movie.studios);
           expect(res.body.winner).toEqual(movie.winner);
         });
@@ -125,7 +129,7 @@ describe('MovieController (e2e)', () => {
       const updatedMovie: InputMovieDto = {
         title: 'Updated Movie',
         year: 2021,
-        producers: 'Updated Producer',
+        producerIds: [producersData[0].id],
         studios: 'Updated Studio',
         winner: false,
       };
@@ -137,7 +141,7 @@ describe('MovieController (e2e)', () => {
         .expect((res) => {
           expect(res.body.title).toEqual(updatedMovie.title);
           expect(res.body.year).toEqual(updatedMovie.year);
-          expect(res.body.producers).toEqual(updatedMovie.producers);
+          expect(res.body.producers[0].id).toEqual(updatedMovie.producerIds[0]);
           expect(res.body.studios).toEqual(updatedMovie.studios);
           expect(res.body.winner).toEqual(updatedMovie.winner);
         });
@@ -147,7 +151,7 @@ describe('MovieController (e2e)', () => {
       const updatedMovie: InputMovieDto = {
         title: 'Updated Movie',
         year: 2021,
-        producers: 'Updated Producer',
+        producerIds: [producersData[0].id],
         studios: 'Updated Studio',
         winner: false,
       };

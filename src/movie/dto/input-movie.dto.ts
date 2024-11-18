@@ -1,4 +1,6 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsBoolean,
   IsInt,
   IsPositive,
@@ -15,9 +17,10 @@ export class InputMovieDto {
   @IsPositive()
   year: number;
 
-  @IsString()
-  @MaxLength(255)
-  producers: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsInt({ each: true })
+  producerIds: number[];
 
   @IsBoolean()
   winner: boolean;
