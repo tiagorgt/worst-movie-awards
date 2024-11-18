@@ -106,10 +106,13 @@ export class MovieService {
     const producerWins = new Map<string, number[]>();
 
     movies.forEach((movie) => {
-      if (!producerWins.has(movie.producers)) {
-        producerWins.set(movie.producers, []);
-      }
-      producerWins.get(movie.producers).push(movie.year);
+      const producers = movie.producers.split(/,| and /).map((p) => p.trim());
+      producers.forEach((producer) => {
+        if (!producerWins.has(producer)) {
+          producerWins.set(producer, []);
+        }
+        producerWins.get(producer).push(movie.year);
+      });
     });
 
     this.logger.debug(`Found ${producerWins.size} winner producers`);
