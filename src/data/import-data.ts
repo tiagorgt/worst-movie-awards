@@ -19,7 +19,7 @@ export async function importCsvData(
         const uniqueProducers = new Set<string>();
         movies.forEach((movie) => {
           movie.producers.split(/,| and /).forEach((producer) => {
-            uniqueProducers.add(producer.trim());
+            if (producer) uniqueProducers.add(producer.trim());
           });
         });
 
@@ -33,11 +33,14 @@ export async function importCsvData(
         const formattedMovies = movies.map((movie) => {
           const { title, year, studios, winner, producers } = movie;
 
-          const formattedProducers = producers.split(/,| and /).map((p) => {
-            return producersToCreate.find(
-              (producer) => producer.name === p.trim(),
-            );
-          });
+          const formattedProducers = producers
+            .split(/,| and /)
+            .filter((producer) => producer)
+            .map((p) => {
+              return producersToCreate.find(
+                (producer) => producer.name === p.trim(),
+              );
+            });
 
           return {
             title,
